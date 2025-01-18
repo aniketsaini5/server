@@ -174,6 +174,57 @@ app.put('/update-purchy', [
     }
 });
 
+// transport statues 
+app.post('/update-transport-status', async (req, res) => {
+    try {
+        const { purchy_no, transport_status } = req.body;
+        
+        // Validate input
+        if (!purchy_no || !transport_status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Purchy number and transport status are required'
+            });
+        }
+
+        // Validate transport status value
+        if (!['paid', 'unpaid'].includes(transport_status.toLowerCase())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid transport status. Must be either "paid" or "unpaid"'
+            });
+        }
+
+        // Find and update the purchy
+        const updatedPurchy = await Purchy.findOneAndUpdate(
+            { purchy_no },
+            { transport_status: transport_status.toLowerCase() },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedPurchy) {
+            return res.status(404).json({
+                success: false,
+                message: 'Purchy not found'
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Transport status updated successfully',
+            purchy: updatedPurchy
+        });
+
+    } catch (error) {
+        console.error('Error updating transport status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
